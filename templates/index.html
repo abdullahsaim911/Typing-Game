@@ -382,6 +382,9 @@
                     startBtn.disabled = true;
                     resetBtn.disabled = false;
                     
+                    // Update status
+                    document.querySelector('.header p').textContent = 'Test your typing speed and accuracy!';
+                    
                     // Start timer
                     gameState.timer = setInterval(updateTimer, 1000);
                     updateTimer();
@@ -404,9 +407,14 @@
             wpmDisplay.textContent = '0';
             accuracyDisplay.textContent = '100%';
             timerDisplay.textContent = '60';
+            
+            // Reset status
+            document.querySelector('.header p').textContent = 'Test your typing speed and accuracy!';
         }
 
         function updateTimer() {
+            if (!gameState.isPlaying) return;
+            
             gameState.timeLeft--;
             timerDisplay.textContent = gameState.timeLeft;
             
@@ -430,10 +438,19 @@
             const wpm = calculateWPM(originalText, timeElapsed);
             wpmDisplay.textContent = Math.round(wpm);
             
-            // Check for completion - improved logic
-            if (typedText.trim() === originalText.trim()) {
+            // Check for completion - more robust logic
+            const typedTrimmed = typedText.trim();
+            const originalTrimmed = originalText.trim();
+            
+            // Multiple completion checks for robustness
+            if (typedTrimmed === originalTrimmed || 
+                typedText === originalText ||
+                typedTrimmed.length === originalTrimmed.length && 
+                typedTrimmed.toLowerCase() === originalTrimmed.toLowerCase()) {
+                
+                // Text is completed - stop the game immediately
                 textDisplay.className = 'text-display correct';
-                // Stop the game immediately when completed
+                console.log('Text completed! Stopping game...');
                 endGame();
                 return;
             } else if (originalText.startsWith(typedText)) {
@@ -471,14 +488,21 @@
             // Prevent multiple calls
             if (!gameState.isPlaying) return;
             
+            console.log('Ending game...');
             gameState.isPlaying = false;
             clearInterval(gameState.timer);
             typingInput.disabled = true;
             
+            // Update status to show completion
+            document.querySelector('.header p').textContent = '🎉 Game Complete! Enter your name to submit score.';
+            
+            // Calculate final metrics based on actual time taken
             const timeElapsed = (Date.now() - gameState.startTime) / 1000;
             const finalWpm = calculateWPM(gameState.originalText, timeElapsed);
             const finalAccuracy = calculateAccuracy(gameState.originalText, typingInput.value);
             const finalScore = Math.round(finalWpm * (finalAccuracy / 100));
+            
+            console.log(`Final stats - WPM: ${finalWpm}, Accuracy: ${finalAccuracy}%, Score: ${finalScore}, Time: ${timeElapsed}s`);
             
             // Show results
             document.getElementById('finalWpm').textContent = Math.round(finalWpm);
